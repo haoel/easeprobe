@@ -3,7 +3,7 @@ module github.com/megaease/easeprobe
 go 1.18
 
 require (
-	github.com/aws/aws-sdk-go v1.44.4
+	github.com/aws/aws-sdk-go v1.44.9
 	github.com/go-chi/chi/v5 v5.0.7
 	github.com/go-co-op/gocron v1.13.0
 	github.com/go-redis/redis/v8 v8.11.5
