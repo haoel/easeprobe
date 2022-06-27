@@ -199,6 +199,16 @@ func getYamlFile(path string) ([]byte, error) {
 
 // New read the configuration from yaml
 func New(conf *string) (*Conf, error) {
+	c, err := ReadConfig(conf)
+	if err != nil {
+		return nil, err
+	}
+	c.Init()
+	return c, err
+}
+
+// ReadConfig read the yaml configuration from file or url
+func ReadConfig(conf *string) (*Conf, error) {
 	c := Conf{
 		HTTP:   []http.HTTP{},
 		TCP:    []tcp.TCP{},
@@ -259,40 +269,51 @@ func New(conf *string) (*Conf, error) {
 		log.Errorf("error: %v", err)
 		return &c, err
 	}
+	return &c, nil
+}
 
+// Init is the initialization of the configuration
+func (conf *Conf) Init() {
 	// Initialization
-	global.InitEaseProbe(c.Settings.Name, c.Settings.IconURL)
-	c.initData()
+	conf.initEaseProbe()
+	conf.initData()
+	conf.initConfig()
 
-	ssh.BastionMap.ParseAllBastionHost()
-	host.BastionMap.ParseAllBastionHost()
-
-	// pass the dry run to the channel
-	channel.SetDryNotify(c.Settings.Notify.Dry)
-
-	config = &c
+	config = conf
 
 	log.Infoln("Load the configuration file successfully!")
 	if log.GetLevel() >= log.DebugLevel {
-		s, err := yaml.Marshal(c)
+		s, err := yaml.Marshal(conf)
 		if err != nil {
-			log.Debugf("%v\n%+v", err, c)
+			log.Debugf("%v\n%+v", err, conf)
 		} else {
 			log.Debugf("\n%s", string(s))
 		}
 	}
-
-	return &c, err
 }
 
 // InitAllLogs initialize all logs
 func (conf *Conf) InitAllLogs() {
-
 	conf.Settings.Log.InitLog(nil)
 	conf.Settings.Log.LogInfo("Application")
 
 	conf.Settings.HTTPServer.AccessLog.InitLog(log.New())
 	conf.Settings.HTTPServer.AccessLog.LogInfo("Web Access")
+}
+
+// initEaseProbe initialize the EaseProbe
+func (conf *Conf) initEaseProbe() {
+	global.InitEaseProbe(conf.Settings.Name, conf.Settings.IconURL)
+}
+
+// initConfig just initialize the configuration for probe, notification and channel
+func (conf *Conf) initConfig() {
+	// Parse the basion host
+	ssh.BastionMap.ParseAllBastionHost()
+	host.BastionMap.ParseAllBastionHost()
+
+	// pass the dry run to the channel
+	channel.SetDryNotify(conf.Settings.Notify.Dry)
 }
 
 func (conf *Conf) initData() {
